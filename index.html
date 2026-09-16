@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impeccable · 让设计无可挑剔</title>
+<meta name="description" content="Impeccable 是一套为前端团队打造的设计工具集：令牌管理、组件审计、对比度检查与代码导出，一个页面完成设计到代码的最后一公里。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237C3AED'/%3E%3Cstop offset='1' stop-color='%23EC4899'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3C/svg%3E">
+<script>
+(function () {
+  var stored = null;
+  try { stored = localStorage.getItem('impeccable-theme'); } catch (e) {}
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = stored || (prefersDark ? 'dark' : 'light');
+})();
+</script>
+<style>
+/* ========== 设计令牌 ========== */
+:root {
+  --bg:            #F6F7FB;
+  --bg-2:          #F1F4F9;
+  --glass:         rgba(255,255,255,0.55);
+  --glass-strong:  rgba(255,255,255,0.72);
+  --hairline:      rgba(15,23,42,0.08);
+  --hairline-soft: rgba(15,23,42,0.05);
+  --text-1:        #0F172A;
+  --text-2:        #475569;
+  --text-3:        #94A3B8;
+  --grad-a:        #7C3AED;
+  --grad-b:        #EC4899;
+  --accent-3:      #06B6D4;
+  --accent-text:   #0891B2;
+  --on-grad:       #FFFFFF;
+  --star:          #F59E0B;
+  --ok:            #16A34A;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --shadow-soft: 0 8px 24px rgba(15,23,42,0.06);
+  --shadow-lift: 0 16px 40px rgba(15,23,42,0.10);
+  --glow-1: rgba(124,58,237,0.10);
+  --glow-2: rgba(6,182,212,0.09);
+  --glow-3: rgba(236,72,153,0.07);
+}
+[data-theme="dark"] {
+  --bg:            #0A0B1A;
+  --bg-2:          #0E1024;
+  --glass:         rgba(255,255,255,0.05);
+  --glass-strong:  rgba(255,255,255,0.08);
+  --hairline:      rgba(255,255,255,0.10);
+  --hairline-soft: rgba(255,255,255,0.06);
+  --text-1:        #F8FAFC;
+  --text-2:        #94A3B8;
+  --text-3:        #64748B;
+  --accent-text:   #06B6D4;
+  --shadow-soft: 0 8px 24px rgba(0,0,0,0.40);
+  --shadow-lift: 0 16px 40px rgba(0,0,0,0.50);
+  --glow-1: rgba(124,58,237,0.24);
+  --glow-2: rgba(6,182,212,0.16);
+  --glow-3: rgba(236,72,153,0.14);
+}
+
+/* ========== 基础 ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(600px circle at 15% 15%, var(--glow-1), transparent 60%),
+    radial-gradient(500px circle at 85% 30%, var(--glow-2), transparent 60%),
+    radial-gradient(700px circle at 50% 90%, var(--glow-3), transparent 60%),
+    var(--bg);
+}
+.mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+::selection { background: color-mix(in srgb, var(--grad-a) 22%, transparent); }
+:focus-visible { outline: 2px solid color-mix(in srgb, var(--grad-a) 55%, transparent); outline-offset: 2px; }
+
+/* ========== 导航 ========== */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 1px solid var(--hairline);
+}
+.nav-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15.5px; letter-spacing: -0.01em; }
+.logo-mark {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+  display: grid; place-items: center;
+  color: var(--on-grad);
+  flex: none;
+}
+.nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--text-2); }
+.nav-links a { transition: opacity .25s ease; }
+.nav-links a:hover { color: var(--text-1); }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.theme-toggle {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  background: var(--glass);
+  display: grid; place-items: center;
+  color: var(--text-2);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.theme-toggle:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); color: var(--text-1); }
+.theme-toggle .icon-sun { display: none; }
+[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 999px;
+  transition: transform .25s ease, box-shadow .25s ease, opacity .25s ease;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+  color: var(--on-grad);
+  box-shadow: var(--shadow-soft);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.btn-ghost {
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  color: var(--text-1);
+}
+.btn-ghost:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+.btn-sm { padding: 9px 18px; font-size: 13.5px; }
+
+/* ========== Hero ========== */
+.hero { padding: 168px 24px 96px; max-width: 960px; margin: 0 auto; text-align: center; }
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--text-2);
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  padding: 7px 15px;
+  border-radius: 999px;
+}
+.tag-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.hero h1 {
+  font-size: clamp(40px, 6.5vw, 72px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.14;
+  margin: 26px 0 22px;
+}
+.grad-text {
+  background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-sub {
+  font-size: 17px;
+  color: var(--text-2);
+  max-width: 620px;
+  margin: 0 auto 38px;
+}
+.cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 56px;
+}
+.stat { text-align: center; }
+.stat b {
+  display: block;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.stat span { font-size: 13px; color: var(--text-3); }
+
+/* 3D Mockup */
+.stage { perspective: 1200px; margin-top: 72px; }
+.plate {
+  max-width: 860px;
+  margin: 0 auto;
+  background: var(--glass-strong);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lift);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  transform: rotateX(8deg) rotateY(-8deg);
+  transform-style: preserve-3d;
+  animation: float 6s ease-in-out infinite alternate;
+}
+@keyframes float {
+  from { transform: rotateX(8deg) rotateY(-8deg) translateY(0); }
+  to   { transform: rotateX(8deg) rotateY(-8deg) translateY(-12px); }
+}
+.plate-bar {
+  height: 44px;
+  border-bottom: 1px solid var(--hairline-soft);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+}
+.dots { display: flex; gap: 6px; }
+.dots i {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--hairline);
+}
+.dots i:nth-child(1) { background: color-mix(in srgb, var(--grad-b) 55%, transparent); }
+.dots i:nth-child(2) { background: color-mix(in srgb, var(--star) 55%, transparent); }
+.dots i:nth-child(3) { background: color-mix(in srgb, var(--accent-3) 55%, transparent); }
+.addr {
+  flex: 1;
+  max-width: 280px;
+  margin: 0 auto;
+  text-align: center;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-3);
+  background: var(--bg-2);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 999px;
+  padding: 4px 14px;
+}
+.plate-body { display: grid; grid-template-columns: 128px 1fr; min-height: 330px; }
+.plate-side {
+  border-right: 1px solid var(--hairline-soft);
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.side-line { height: 8px; border-radius: 4px; background: var(--hairline); }
+.side-line.w80 { width: 80%; }
+.side-line.w60 { width: 60%; }
+.side-line.w70 { width: 70%; }
+.side-line.grad { width: 90%; background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); }
+.plate-main { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.plate-hero {
+  height: 92px;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+}
+.plate-hero i {
+  display: block;
+  height: 9px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--on-grad) 75%, transparent);
+  width: 45%;
+}
+.plate-lines { display: flex; flex-direction: column; gap: 9px; }
+.plate-lines i { display: block; height: 8px; border-radius: 4px; background: var(--hairline); }
+.plate-lines i:nth-child(1) { width: 72%; }
+.plate-lines i:nth-child(2) { width: 48%; }
+.plate-chart { display: flex; align-items: flex-end; gap: 10px; height: 92px; padding-top: 6px; }
+.plate-chart i {
+  flex: 1;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--accent-3), var(--grad-a));
+  opacity: 0.85;
+}
+
+/* ========== 通用区块 ========== */
+.section { padding: 96px 24px; max-width: 1120px; margin: 0 auto; }
+.section-head { text-align: center; max-width: 640px; margin: 0 auto 56px; }
+.eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  margin-bottom: 14px;
+}
+.section-head h2 {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+.section-head p { color: var(--text-2); font-size: 15.5px; }
+
+/* 入场 */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .7s ease, transform .7s cubic-bezier(.22,.61,.36,1);
+  transition-delay: calc(var(--i, 0) * 60ms);
+}
+.reveal.in-view { opacity: 1; transform: none; }
+
+/* ========== 特性网格 ========== */
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.card {
+  height: 100%;
+  padding: 28px;
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-soft);
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+.card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lift); }
+.chip {
+  width: 44px; height: 44px;
+  border-radius: var(--r-sm);
+  display: grid; place-items: center;
+  margin-bottom: 18px;
+}
+.chip.c-purple { background: color-mix(in srgb, var(--grad-a) 13%, transparent); color: var(--grad-a); }
+.chip.c-pink   { background: color-mix(in srgb, var(--grad-b) 13%, transparent); color: var(--grad-b); }
+.chip.c-cyan   { background: color-mix(in srgb, var(--accent-3) 13%, transparent); color: var(--accent-text); }
+.card h3 { font-size: 16.5px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+.card p { font-size: 14px; color: var(--text-2); }
+
+/* ========== 评价轮播 ========== */
+.carousel { max-width: 720px; margin: 0 auto; }
+.viewport {
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  cursor: grab;
+  touch-action: pan-y;
+}
+.viewport.dragging { cursor: grabbing; }
+.track {
+  display: flex;
+  transition: transform .55s cubic-bezier(.22,.61,.36,1);
+}
+.track.no-anim { transition: none; }
+.slide { flex: 0 0 100%; padding: 2px; }
+.t-card {
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-soft);
+  padding: 40px;
+}
+.stars { display: flex; gap: 4px; color: var(--star); margin-bottom: 20px; }
+.t-quote { font-size: 17px; line-height: 1.75; margin-bottom: 28px; }
+.t-foot { display: flex; align-items: center; gap: 14px; }
+.avatar { width: 46px; height: 46px; border-radius: 50%; flex: none; box-shadow: var(--shadow-soft); }
+.t-name { font-size: 14.5px; font-weight: 600; }
+.t-role { font-size: 13px; color: var(--text-3); }
+.dots-row { display: flex; justify-content: center; gap: 10px; margin-top: 28px; }
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: var(--hairline);
+  transition: transform .3s ease, background .3s ease;
+  transform-origin: left center;
+}
+.dot.active { background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); transform: scaleX(3); }
+
+/* ========== FAQ ========== */
+.faq-list { max-width: 760px; margin: 0 auto; }
+details {
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+  font-size: 15.5px;
+}
+summary::-webkit-details-marker { display: none; }
+.chev { flex: none; color: var(--text-3); transition: transform .3s ease; }
+details[open] .chev { transform: rotate(180deg); }
+.faq-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
+details[open] .faq-body { grid-template-rows: 1fr; }
+.faq-body > div { overflow: hidden; }
+.faq-body p { padding: 0 24px 22px; font-size: 14.5px; color: var(--text-2); }
+
+/* ========== 订阅 ========== */
+.subscribe-card {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+  background: var(--glass-strong);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-soft);
+  padding: 56px 32px;
+}
+.subscribe-card h2 { font-size: clamp(26px, 3.4vw, 34px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+.subscribe-card > p { color: var(--text-2); font-size: 15px; margin-bottom: 30px; }
+.sub-form { display: flex; gap: 12px; max-width: 460px; margin: 0 auto; }
+.sub-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-1);
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  outline: none;
+  transition: box-shadow .25s ease;
+}
+.sub-form input::placeholder { color: var(--text-3); }
+.sub-form input:focus { box-shadow: 0 0 0 4px color-mix(in srgb, var(--grad-a) 16%, transparent); }
+.sub-form input.shake { animation: shake .4s ease; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.sub-error { font-size: 13px; color: var(--grad-b); margin-top: 12px; opacity: 0; transition: opacity .25s ease; }
+.sub-error.show { opacity: 1; }
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ========== Toast ========== */
+.toast {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--glass-strong);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: var(--shadow-lift);
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateX(calc(100% + 40px));
+  transition: transform .45s cubic-bezier(.22,.61,.36,1), opacity .45s ease;
+  opacity: 0;
+}
+.toast.show { transform: none; opacity: 1; }
+.toast-ok {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ok) 15%, transparent);
+  color: var(--ok);
+  display: grid; place-items: center;
+  flex: none;
+}
+
+/* ========== 页脚 ========== */
+.footer { border-top: 1px solid var(--hairline); }
+.footer-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13.5px;
+  color: var(--text-3);
+}
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { transition: opacity .25s ease; }
+.footer-links a:hover { color: var(--text-1); }
+
+/* ========== 响应式 ========== */
+@media (max-width: 960px) {
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 860px) {
+  .nav-links { display: none; }
+}
+@media (max-width: 640px) {
+  .features-grid { grid-template-columns: 1fr; }
+  .hero { padding-top: 136px; }
+  .section { padding: 72px 20px; }
+  .plate-body { grid-template-columns: 1fr; }
+  .plate-side { display: none; }
+  .t-card { padding: 28px 22px; }
+  .sub-form { flex-direction: column; }
+  .sub-form .btn { justify-content: center; }
+  .footer-inner { justify-content: center; text-align: center; }
+}
+
+/* ========== 减少动效 ========== */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .tag-dot, .plate { animation: none !important; }
+  .stage { perspective: none; }
+  .plate { transform: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== 导航 ========== -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#top" aria-label="Impeccable 首页">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+      </span>
+      Impeccable
+    </a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="#features">特性</a>
+      <a href="#testimonials">评价</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" aria-label="切换深浅主题">
+        <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      </button>
+      <a class="btn btn-primary btn-sm" href="#subscribe">免费开始</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ========== Hero ========== -->
+  <section class="hero">
+    <div class="reveal" style="--i:0">
+      <span class="tag-pill"><span class="tag-dot" aria-hidden="true"></span>V2.0 · 全新发布</span>
+    </div>
+    <h1 class="reveal" style="--i:1">设计，做到<br><span class="grad-text">无可挑剔。</span></h1>
+    <p class="hero-sub reveal" style="--i:2">Impeccable 是一套为前端团队打造的设计工具集：令牌管理、组件审计、对比度检查与代码导出，在一个页面里走完设计到代码的最后一公里。</p>
+    <div class="cta-row reveal" style="--i:3">
+      <a class="btn btn-primary" href="#subscribe">免费开始使用
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <a class="btn btn-ghost" href="#features">查看功能特性</a>
+    </div>
+    <div class="hero-stats reveal" style="--i:4">
+      <div class="stat"><b>12,000+</b><span>团队在用</span></div>
+      <div class="stat"><b>99</b><span>平均 Lighthouse 分</span></div>
+      <div class="stat"><b>0</b><span>第三方依赖</span></div>
+    </div>
+
+    <div class="stage reveal" style="--i:5" aria-hidden="true">
+      <div class="plate">
+        <div class="plate-bar">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <div class="addr">impeccable.app/studio</div>
+        </div>
+        <div class="plate-body">
+          <div class="plate-side">
+            <span class="side-line grad"></span>
+            <span class="side-line w80"></span>
+            <span class="side-line w60"></span>
+            <span class="side-line w70"></span>
+            <span class="side-line w60"></span>
+          </div>
+          <div class="plate-main">
+            <div class="plate-hero"><i></i></div>
+            <div class="plate-lines"><i></i><i></i></div>
+            <div class="plate-chart">
+              <i style="height:42%"></i><i style="height:66%"></i><i style="height:50%"></i><i style="height:82%"></i><i style="height:60%"></i><i style="height:92%"></i><i style="height:46%"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 特性 ========== -->
+  <section class="section" id="features">
+    <div class="section-head reveal">
+      <div class="eyebrow">Features</div>
+      <h2>一套工具，覆盖设计到交付</h2>
+      <p>九个模块环环相扣，让设计系统落地不再靠运气。</p>
+    </div>
+    <div class="features-grid">
+      <div class="reveal" style="--i:0"><div class="card">
+        <div class="chip c-purple"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></div>
+        <h3>设计令牌</h3>
+        <p>颜色、圆角、间距统一管理，一处修改，全局同步，不再逐页追改。</p>
+      </div></div>
+      <div class="reveal" style="--i:1"><div class="card">
+        <div class="chip c-pink"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8.5 9 12l-3.5 3.5L2 12l3.5-3.5Z"/><path d="m12 2 3.5 3.5L12 9 8.5 5.5 12 2Z"/><path d="M18.5 8.5 22 12l-3.5 3.5L15 12l3.5-3.5Z"/><path d="m12 15 3.5 3.5L12 22l-3.5-3.5L12 15Z"/></svg></div>
+        <h3>组件审计</h3>
+        <p>自动扫描页面组件，标记偏离设计系统的每一处实现，附修复建议。</p>
+      </div></div>
+      <div class="reveal" style="--i:2"><div class="card">
+        <div class="chip c-cyan"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>对比度检查</h3>
+        <p>实时计算文字与背景的对比度，WCAG 等级一目了然，发布前自动拦截。</p>
+      </div></div>
+      <div class="reveal" style="--i:3"><div class="card">
+        <div class="chip c-purple"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></div>
+        <h3>网格对齐</h3>
+        <p>8 点网格自动吸附，间距像素级对齐，从此告别肉眼微调。</p>
+      </div></div>
+      <div class="reveal" style="--i:4"><div class="card">
+        <div class="chip c-pink"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 14"/></svg></div>
+        <h3>代码导出</h3>
+        <p>一键导出 CSS 变量与 Tailwind 配置，粘贴即用，设计与代码说同一种语言。</p>
+      </div></div>
+      <div class="reveal" style="--i:5"><div class="card">
+        <div class="chip c-cyan"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></div>
+        <h3>性能预算</h3>
+        <p>为每个页面设定资源预算，超标即时提醒，守住首屏加载速度。</p>
+      </div></div>
+      <div class="reveal" style="--i:6"><div class="card">
+        <div class="chip c-purple"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.21 1.21 0 0 0 1.72 0L21.64 5.36a1.21 1.21 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M3 8h4"/><path d="M17 16h4"/></svg></div>
+        <h3>动效编排</h3>
+        <p>只用 transform 与 opacity 编排动效，流畅、可中断，不阻塞主线程。</p>
+      </div></div>
+      <div class="reveal" style="--i:7"><div class="card">
+        <div class="chip c-pink"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg></div>
+        <h3>终端集成</h3>
+        <p>CLI 直达 CI 流水线，设计合规检查随每次提交自动运行。</p>
+      </div></div>
+      <div class="reveal" style="--i:8"><div class="card">
+        <div class="chip c-cyan"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>团队协作</h3>
+        <p>评论、版本与权限集中一处，设计决策有迹可循，新成员快速上手。</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ========== 评价 ========== -->
+  <section class="section" id="testimonials">
+    <div class="section-head reveal">
+      <div class="eyebrow">Testimonials</div>
+      <h2>他们已经换上了 Impeccable</h2>
+      <p>来自一线团队的真实反馈。</p>
+    </div>
+    <div class="carousel reveal">
+      <div class="viewport" id="viewport">
+        <div class="track" id="track">
+
+          <div class="slide"><div class="t-card">
+            <div class="stars" aria-label="五星好评">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <p class="t-quote">「接入第一周，设计走查会议从两小时缩短到二十分钟。审计报告直接指出了我们从未注意到的三十多处间距偏差。」</p>
+            <div class="t-foot">
+              <svg class="avatar" viewBox="0 0 46 46" aria-hidden="true"><defs><linearGradient id="av1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="46" height="46" rx="23" fill="url(#av1)"/><circle cx="30" cy="16" r="9" fill="#FFFFFF" opacity="0.25"/><circle cx="16" cy="31" r="6" fill="#FFFFFF" opacity="0.18"/></svg>
+              <div><div class="t-name">林一舟</div><div class="t-role">前端架构师 · 星图科技</div></div>
+            </div>
+          </div></div>
+
+          <div class="slide"><div class="t-card">
+            <div class="stars" aria-label="五星好评">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <p class="t-quote">「令牌一键导出到 Tailwind 的那一刻，设计和开发终于说上了同一种语言，走查群里再也看不到色号截图。」</p>
+            <div class="t-foot">
+              <svg class="avatar" viewBox="0 0 46 46" aria-hidden="true"><defs><linearGradient id="av2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#06B6D4"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><rect width="46" height="46" rx="23" fill="url(#av2)"/><rect x="24" y="8" width="18" height="18" rx="4" fill="#FFFFFF" opacity="0.25"/><circle cx="16" cy="30" r="7" fill="#FFFFFF" opacity="0.18"/></svg>
+              <div><div class="t-name">苏晚晴</div><div class="t-role">设计负责人 · 白桦工作室</div></div>
+            </div>
+          </div></div>
+
+          <div class="slide"><div class="t-card">
+            <div class="stars" aria-label="五星好评">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <p class="t-quote">「对比度检查帮我们在发布前拦下了两个无障碍合规问题。对一个面向海外用户的产品来说，光这一项就值回票价。」</p>
+            <div class="t-foot">
+              <svg class="avatar" viewBox="0 0 46 46" aria-hidden="true"><defs><linearGradient id="av3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EC4899"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs><rect width="46" height="46" rx="23" fill="url(#av3)"/><polygon points="23,10 34,32 12,32" fill="#FFFFFF" opacity="0.25"/><circle cx="33" cy="15" r="5" fill="#FFFFFF" opacity="0.2"/></svg>
+              <div><div class="t-name">陈默</div><div class="t-role">产品经理 · 北屿网络</div></div>
+            </div>
+          </div></div>
+
+          <div class="slide"><div class="t-card">
+            <div class="stars" aria-label="五星好评">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <p class="t-quote">「CLI 接进 CI 之后，设计规范不再依赖自觉，违规在合并前就会被拦下。团队的交付质量稳定了一个台阶。」</p>
+            <div class="t-foot">
+              <svg class="avatar" viewBox="0 0 46 46" aria-hidden="true"><defs><linearGradient id="av4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#06B6D4"/></linearGradient></defs><rect width="46" height="46" rx="23" fill="url(#av4)"/><rect x="8" y="22" width="14" height="14" rx="7" fill="#FFFFFF" opacity="0.22"/><rect x="24" y="8" width="14" height="14" rx="7" fill="#FFFFFF" opacity="0.16"/></svg>
+              <div><div class="t-name">赵启铭</div><div class="t-role">工程经理 · 远川数据</div></div>
+            </div>
+          </div></div>
+
+        </div>
+      </div>
+      <div class="dots-row" id="dotsRow" role="tablist" aria-label="评价翻页"></div>
+    </div>
+  </section>
+
+  <!-- ========== FAQ ========== -->
+  <section class="section" id="faq">
+    <div class="section-head reveal">
+      <div class="eyebrow">FAQ</div>
+      <h2>你想知道的，都在这里</h2>
+      <p>还有其他问题，欢迎来信交流。</p>
+    </div>
+    <div class="faq-list">
+      <div class="reveal" style="--i:0"><details>
+        <summary>Impeccable 支持哪些框架？
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="faq-body"><div><p>工具集输出标准 CSS 变量与设计令牌 JSON，React、Vue、Svelte 或原生项目都可以直接接入，不需要改造现有代码。</p></div></div>
+      </details></div>
+      <div class="reveal" style="--i:1"><details>
+        <summary>免费版包含什么功能？
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="faq-body"><div><p>免费版包含令牌管理、对比度检查与每月 100 次组件审计，没有试用期限制，适合个人项目长期用。</p></div></div>
+      </details></div>
+      <div class="reveal" style="--i:2"><details>
+        <summary>我的设计数据会被上传吗？
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="faq-body"><div><p>所有检查默认在本地浏览器中完成，数据不出设备。团队协作功能可选开启，同步过程全程端到端加密。</p></div></div>
+      </details></div>
+      <div class="reveal" style="--i:3"><details>
+        <summary>可以和 Figma 互通吗？
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="faq-body"><div><p>支持。令牌与组件库可以和 Figma Variables 双向同步，设计与代码始终保持一致，改哪边都不会丢。</p></div></div>
+      </details></div>
+      <div class="reveal" style="--i:4"><details>
+        <summary>深色模式的支持做得怎么样？
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="faq-body"><div><p>每个令牌都可以定义明暗双值，切换主题只需要改动一个属性，不需要编写任何额外样式，本页右上角即可体验。</p></div></div>
+      </details></div>
+    </div>
+  </section>
+
+  <!-- ========== 订阅 ========== -->
+  <section class="section" id="subscribe">
+    <div class="subscribe-card reveal">
+      <div class="eyebrow">Newsletter</div>
+      <h2>订阅产品更新</h2>
+      <p>每月一封，只发版本亮点与设计工程实践文章，随时一键退订。</p>
+      <form class="sub-form" id="subForm" novalidate>
+        <input type="email" id="subEmail" placeholder="输入你的邮箱地址" aria-label="邮箱地址" autocomplete="email">
+        <button class="btn btn-primary" type="submit" id="subBtn">
+          <span id="subBtnText">订阅</span>
+          <svg id="subBtnSpin" class="spin" style="display:none" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        </button>
+      </form>
+      <div class="sub-error" id="subError">请输入正确的邮箱地址</div>
+    </div>
+  </section>
+</main>
+
+<!-- ========== Toast ========== -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="toast-ok" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </span>
+  订阅成功，欢迎加入！
+</div>
+
+<!-- ========== 页脚 ========== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div>© 2026 Impeccable · 让设计无可挑剔</div>
+    <div class="footer-links">
+      <a href="#features">特性</a>
+      <a href="#testimonials">评价</a>
+      <a href="#faq">常见问题</a>
+      <a href="#subscribe">订阅</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- 主题切换 ---------- */
+  var themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', function () {
+    var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('impeccable-theme', next); } catch (e) {}
+  });
+
+  /* ---------- 入场动画 ---------- */
+  var revealEls = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+    revealEls.forEach(function (el) { io.observe(el); });
+  } else {
+    revealEls.forEach(function (el) { el.classList.add('in-view'); });
+  }
+
+  /* ---------- 评价轮播 ---------- */
+  var viewport = document.getElementById('viewport');
+  var track = document.getElementById('track');
+  var slides = track.children;
+  var dotsRow = document.getElementById('dotsRow');
+  var count = slides.length;
+  var index = 0;
+  var timer = null;
+
+  for (var d = 0; d < count; d++) {
+    var dot = document.createElement('button');
+    dot.className = 'dot' + (d === 0 ? ' active' : '');
+    dot.setAttribute('role', 'tab');
+    dot.setAttribute('aria-label', '第 ' + (d + 1) + ' 条评价');
+    (function (i) {
+      dot.addEventListener('click', function () { goTo(i); restartAuto(); });
+    })(d);
+    dotsRow.appendChild(dot);
+  }
+  var dots = dotsRow.children;
+
+  function goTo(i) {
+    index = (i + count) % count;
+    track.classList.remove('no-anim');
+    track.style.transform = 'translateX(' + (-index * 100) + '%)';
+    for (var k = 0; k < count; k++) dots[k].classList.toggle('active', k === index);
+  }
+
+  function startAuto() {
+    if (reduced) return;
+    stopAuto();
+    timer = setInterval(function () { goTo(index + 1); }, 4000);
+  }
+  function stopAuto() { if (timer) { clearInterval(timer); timer = null; } }
+  function restartAuto() { stopAuto(); startAuto(); }
+
+  /* 拖拽切换（鼠标 + 触摸） */
+  var dragging = false, startX = 0, deltaX = 0;
+  viewport.addEventListener('pointerdown', function (e) {
+    dragging = true; startX = e.clientX; deltaX = 0;
+    viewport.classList.add('dragging');
+    viewport.setPointerCapture(e.pointerId);
+    track.classList.add('no-anim');
+    stopAuto();
+  });
+  viewport.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    deltaX = e.clientX - startX;
+    track.style.transform = 'translateX(calc(' + (-index * 100) + '% + ' + deltaX + 'px))';
+  });
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    viewport.classList.remove('dragging');
+    if (Math.abs(deltaX) > 60) {
+      goTo(index + (deltaX < 0 ? 1 : -1));
+    } else {
+      goTo(index);
+    }
+    startAuto();
+  }
+  viewport.addEventListener('pointerup', endDrag);
+  viewport.addEventListener('pointercancel', endDrag);
+  viewport.addEventListener('mouseenter', stopAuto);
+  viewport.addEventListener('mouseleave', function () { if (!dragging) startAuto(); });
+
+  startAuto();
+
+  /* ---------- 订阅表单 + Toast ---------- */
+  var form = document.getElementById('subForm');
+  var email = document.getElementById('subEmail');
+  var btn = document.getElementById('subBtn');
+  var btnText = document.getElementById('subBtnText');
+  var btnSpin = document.getElementById('subBtnSpin');
+  var error = document.getElementById('subError');
+  var toast = document.getElementById('toast');
+  var toastTimer = null;
+
+  function showToast() {
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 3000);
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var value = email.value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(value)) {
+      error.classList.add('show');
+      email.classList.remove('shake');
+      void email.offsetWidth;
+      email.classList.add('shake');
+      return;
+    }
+    error.classList.remove('show');
+    btn.disabled = true;
+    btnText.textContent = '提交中';
+    btnSpin.style.display = 'block';
+    setTimeout(function () {
+      btn.disabled = false;
+      btnText.textContent = '订阅';
+      btnSpin.style.display = 'none';
+      email.value = '';
+      showToast();
+    }, 1200);
+  });
+})();
+</script>
+</body>
+</html>
